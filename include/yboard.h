@@ -79,7 +79,7 @@ class YBoardV2 {
      * played. The duration parameter is a long integer representing the duration of
      * the note in milliseconds.
      */
-    void play_note(unsigned int freq, unsigned long duration);
+    void play_note_background(unsigned int freq, unsigned long duration);
 
     // LEDs
     static constexpr int led_pin = 5;

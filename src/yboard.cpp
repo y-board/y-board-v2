@@ -93,6 +93,6 @@ void YBoardV2::setup_timer() {
 
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
-void YBoardV2::play_note(unsigned int freq, unsigned long duration) {
+void YBoardV2::play_note_background(unsigned int freq, unsigned long duration) {
     tone(this->tone_pin, freq, duration);
 }
