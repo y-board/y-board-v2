@@ -10,6 +10,7 @@ void YBoardV2::setup() {
     setup_leds();
     setup_switches();
     setup_buttons();
+    setup_timer();
 }
 
 ////////////////////////////// LEDs ///////////////////////////////
@@ -83,7 +84,7 @@ int YBoardV2::get_knob() {
 void timer_isr() {}
 void YBoardV2::setup_timer() {
     // Prescaler = 80, So timer clock = 80MHZ/80 = 1MHz = 1us period
-    interrupt_timer = timerBegin(0, 80, true);
+    hw_timer_t *interrupt_timer = timerBegin(0, 80, true);
 
     timerAttachInterrupt(interrupt_timer, &timer_isr, true);
 

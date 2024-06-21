@@ -98,7 +98,6 @@ class YBoardV2 {
 
   private:
     Adafruit_NeoPixel strip;
-    hw_timer_t *interrupt_timer;
 
     void setup_leds();
     void setup_switches();
