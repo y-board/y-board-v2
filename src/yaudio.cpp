@@ -294,6 +294,6 @@ void stop() {
     }
 }
 
-bool is_playing() { return false; }
+bool is_playing() { return notes.length() > 0 || next_note_parsed; }
 
 }; // namespace YAudio
