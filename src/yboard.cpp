@@ -81,10 +81,6 @@ int YBoardV2::get_knob() {
 
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
-// void YBoardV2::play_note_background(unsigned int freq, unsigned long duration) {
-//     tone(this->tone_pin, freq, duration);
-// }
-
-bool YBoardV2::play_notes(const std::string &notes) { return YAudio::add_notes(notes); }
+bool YBoardV2::play_notes_background(const std::string &notes) { return YAudio::add_notes(notes); }
 
 void YBoardV2::loop_speaker() { YAudio::loop(); }

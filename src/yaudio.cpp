@@ -83,8 +83,7 @@ void write_next_note_to_audio_buf() {
     // Convert duration from seconds to miliseconds
     unsigned long duration_ms = next_note_duration_s * 1000;
 
-    Serial.printf("Playing note on %d (frequency: %f, duration: %d)\n", tone_pin, next_note_freq,
-                  duration_ms);
+    Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
     tone(tone_pin, next_note_freq, duration_ms);
     next_note_parsed = false;
 }
