@@ -81,6 +81,22 @@ int YBoardV2::get_knob() {
 
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
+void YBoardV2::loop_speaker() { YAudio::loop(); }
+
+bool YBoardV2::play_notes(const std::string &notes) {
+    if (!play_notes_background(notes)) {
+        return false;
+    }
+
+    while (is_audio_playing()) {
+        loop_speaker();
+    }
+
+    return true;
+}
+
 bool YBoardV2::play_notes_background(const std::string &notes) { return YAudio::add_notes(notes); }
 
-void YBoardV2::loop_speaker() { YAudio::loop(); }
+void YBoardV2::stop_audio() { YAudio::stop(); }
+
+bool YBoardV2::is_audio_playing() { return YAudio::is_playing(); }

@@ -83,9 +83,11 @@ class YBoardV2 {
      */
     // void play_note_background(unsigned int freq, unsigned long duration);
 
-    bool play_notes(const std::string &notes);
-
     void loop_speaker();
+    bool play_notes(const std::string &notes);
+    bool play_notes_background(const std::string &notes);
+    void stop_audio();
+    bool is_audio_playing();
 
     // LEDs
     static constexpr int led_pin = 5;

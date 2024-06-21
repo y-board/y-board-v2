@@ -85,13 +85,12 @@ void write_next_note_to_audio_buf() {
 
     Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
     tone(tone_pin, next_note_freq, duration_ms);
+    // delay(duration_ms);
     next_note_parsed = false;
 }
 
 void parse_next_note() {
     while (notes.length()) {
-        Serial.println("Parsing next note");
-
         // If first character is white space, remove it and continue
         if (isspace(notes[0])) {
             notes.erase(0, 1);
@@ -184,6 +183,8 @@ void parse_next_note() {
                 break;
             }
 
+            Serial.println("Parsing next note");
+
             // Adjust frequency for octave
             next_note_freq *= pow(2, octave - 4);
             notes.erase(0, 1);
@@ -269,19 +270,25 @@ void parse_next_note() {
 }
 
 void loop() {
+    if (notes_running) {
+        // Parse the next note
+        if (notes.length() && !next_note_parsed) {
+            parse_next_note();
+        }
 
-    // Parse the next note
-    if (notes.length() && !next_note_parsed) {
-        parse_next_note();
-    }
-
-    // Play the next note
-    if (next_note_parsed) {
-        write_next_note_to_audio_buf();
+        // Play the next note
+        if (next_note_parsed) {
+            write_next_note_to_audio_buf();
+        }
     }
 }
 
-void stop() {}
+void stop() {
+    if (notes_running) {
+        notes_running = false;
+        notes = "";
+    }
+}
 
 bool is_playing() { return false; }
 
