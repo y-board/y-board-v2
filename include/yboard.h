@@ -76,17 +76,52 @@ class YBoardV2 {
 
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     /*
-     *  This function plays a note on the speaker.
-     *  The freq parameter is an integer representing the frequency of the note to be
-     * played. The duration parameter is a long integer representing the duration of
-     * the note in milliseconds.
+     *  This function continues to play a sound on the speaker after the
+     * play_notes_background function is called. This function must be called
+     * often to playback the sound on the speaker.
      */
-    // void play_note_background(unsigned int freq, unsigned long duration);
-
     void loop_speaker();
+
+    /* Plays the specified sequence of notes. The function will return once the notes
+     * have finished playing.
+     *
+     * A–G	                Specifies a note that will be played.
+     * R                    Specifies a rest (no sound for the duration of the note).
+     * + or # after a note  Raises the preceding note one half-step (sharp).
+     * - after a note	      Lowers the preceding note one half-step.
+     * > after a note	      Plays the note one octave higher (multiple >’s can be used, eg: C>>)
+     * < after a note	      Plays the note one octave lower (multiple <’s can be used, eg: C<<)
+     * 1–2000 after a note	Determines the duration of the preceding note. For example,
+     *                      C16 specifies C played as a sixteenth note, B1 is B played as a whole
+     *                      note. If no duration is specified, the note is played as a quarter note.
+     * O followed by a #    Changes the octave. Valid range is 4-7. Default is 5.
+     * T followed by a #    Changes the tempo. Valid range is 40-240. Default is 120.
+     * !                    Resets octave, tempo, and volume to default values.
+     * spaces               Spaces can be placed between notes or commands for readability,
+     *                      but not within a note or command (eg: "C4# D4" is valid, "C 4 # D 4" is
+     *                      not. "T120 A B C" is valid, "T 120 A B C" is not).
+     */
     bool play_notes(const std::string &notes);
+
+    /* This is similar to the function above, except that it will start playing the notes
+     * in the background and return immediately. The notes will continue to play in the
+     * background until they are stopped with the stop_audio function or the notes finish.
+     * If you call this function again before the notes finish, the the new notes will be
+     * appended to the end of the current notes.  This allows you to call this function
+     * multiple times to build up multiple sequences of notes to play. After this function
+     * is called, the loop_speaker function must be called often to playback the sound on
+     * the speaker.
+     */
     bool play_notes_background(const std::string &notes);
+
+    /*
+     * This function stops the audio from playing (either a song or a sequence of notes)
+     */
     void stop_audio();
+
+    /*
+     *  This function returns whether audio is playing.
+     */
     bool is_audio_playing();
 
     // LEDs
