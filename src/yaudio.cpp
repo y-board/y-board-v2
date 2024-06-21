@@ -6,16 +6,12 @@ namespace YAudio {
 
 ///////////////////////////////// Configuration Constants //////////////////////
 
-// The number of bits per sample.
-static const int BITS_PER_SAMPLE = 16;
-static const int BYTES_PER_SAMPLE = BITS_PER_SAMPLE / 8;
-static const int SAMPLE_RATE = 16000; // sample rate in Hz
 static const int MAX_NOTES_IN_BUFFER = 4000;
-
-static bool notes_running;
 static int tone_pin;
 
 ////// Notes //////
+static bool notes_running;
+
 // This is the sequence of notes to play
 static std::string notes;
 
@@ -31,11 +27,9 @@ static float next_note_duration_s;
 
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
-static void generate_sine_wave(double frequency, int num_samples, double amplitude);
 static void play_note_task(void *params);
 static void parse_next_note();
 static void set_note_defaults();
-static void start_i2s();
 
 ////////////////////////////// Public Functions ///////////////////////////////
 bool add_notes(const std::string &new_notes) {
@@ -53,6 +47,24 @@ bool add_notes(const std::string &new_notes) {
 
     return true;
 }
+
+void loop() {
+    if (notes_running) {
+        // Parse the next note
+        if (notes.length() && !next_note_parsed) {
+            parse_next_note();
+        }
+    }
+}
+
+void stop() {
+    if (notes_running) {
+        notes_running = false;
+        notes = "";
+    }
+}
+
+bool is_playing() { return notes.length() > 0 || next_note_parsed; }
 
 ////////////////////////////// Private Functions ///////////////////////////////
 
@@ -277,23 +289,5 @@ void parse_next_note() {
     }
     next_note_parsed = true;
 }
-
-void loop() {
-    if (notes_running) {
-        // Parse the next note
-        if (notes.length() && !next_note_parsed) {
-            parse_next_note();
-        }
-    }
-}
-
-void stop() {
-    if (notes_running) {
-        notes_running = false;
-        notes = "";
-    }
-}
-
-bool is_playing() { return notes.length() > 0 || next_note_parsed; }
 
 }; // namespace YAudio
