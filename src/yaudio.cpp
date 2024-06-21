@@ -32,7 +32,7 @@ static float next_note_duration_s;
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
 static void generate_sine_wave(double frequency, int num_samples, double amplitude);
-static void write_next_note_to_audio_buf();
+static void play_note_task(void *params);
 static void parse_next_note();
 static void set_note_defaults();
 static void start_i2s();
@@ -77,16 +77,29 @@ void setup(int pin) {
     reset_audio_buf();
     set_note_defaults();
     notes_running = false;
+    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, NULL);
 }
 
-void write_next_note_to_audio_buf() {
-    // Convert duration from seconds to miliseconds
-    unsigned long duration_ms = next_note_duration_s * 1000;
+void play_note_task(void *params) {
+    while (1) {
+        // If there is nothing to do, then wait
+        if (!next_note_parsed) {
+            delay(1);
+            continue;
+        }
 
-    Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
-    tone(tone_pin, next_note_freq, duration_ms);
-    // delay(duration_ms);
-    next_note_parsed = false;
+        // Convert duration from seconds to miliseconds
+        unsigned long duration_ms = next_note_duration_s * 1000;
+
+        Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
+
+        // Play the tone and wait for it to finish
+        tone(tone_pin, next_note_freq, duration_ms);
+        delay(duration_ms);
+
+        // Signal that the note has been played
+        next_note_parsed = false;
+    }
 }
 
 void parse_next_note() {
@@ -274,11 +287,6 @@ void loop() {
         // Parse the next note
         if (notes.length() && !next_note_parsed) {
             parse_next_note();
-        }
-
-        // Play the next note
-        if (next_note_parsed) {
-            write_next_note_to_audio_buf();
         }
     }
 }
