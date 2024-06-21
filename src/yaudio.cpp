@@ -13,7 +13,7 @@ static const int SAMPLE_RATE = 16000; // sample rate in Hz
 static const int MAX_NOTES_IN_BUFFER = 4000;
 
 static bool notes_running;
-static bool wave_running;
+static int tone_pin;
 
 ////// Notes //////
 // This is the sequence of notes to play
@@ -71,8 +71,9 @@ void reset_audio_buf() {
     notes = "";
 }
 
-void setup() {
+void setup(int pin) {
     // Initialize global variables
+    tone_pin = pin;
     reset_audio_buf();
     set_note_defaults();
     notes_running = false;
@@ -82,8 +83,9 @@ void write_next_note_to_audio_buf() {
     // Convert duration from seconds to miliseconds
     unsigned long duration_ms = next_note_duration_s * 1000;
 
-    Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
-    tone(33, next_note_freq, duration_ms);
+    Serial.printf("Playing note on %d (frequency: %f, duration: %d)\n", tone_pin, next_note_freq,
+                  duration_ms);
+    tone(tone_pin, next_note_freq, duration_ms);
     next_note_parsed = false;
 }
 

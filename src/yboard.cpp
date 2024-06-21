@@ -10,7 +10,7 @@ void YBoardV2::setup() {
     setup_leds();
     setup_switches();
     setup_buttons();
-    YAudio::setup();
+    YAudio::setup(this->tone_pin);
 }
 
 ////////////////////////////// LEDs ///////////////////////////////
