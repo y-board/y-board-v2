@@ -45,14 +45,10 @@ bool add_notes(const std::string &new_notes) {
         return false;
     }
 
-    // Removing ending z, which is used as a small rest at the end to prevent speaker crackle
-    if (notes.length() && (notes[notes.size() - 1] == 'z')) {
-        notes.pop_back();
-    }
+    // Append the new notes to the existing notes
+    notes += new_notes;
 
-    // Append the new notes to the existing notes, and add an ending rest
-    notes += new_notes + "z";
-
+    // Signal we need to play
     notes_running = true;
 
     return true;
