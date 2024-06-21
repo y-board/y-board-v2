@@ -70,7 +70,7 @@ bool is_playing() { return notes.length() > 0 || next_note_parsed; }
 
 void set_note_defaults() {
     beats_per_minute = 120;
-    octave = 5;
+    octave = 2;
     volume_notes = 5;
 }
 
