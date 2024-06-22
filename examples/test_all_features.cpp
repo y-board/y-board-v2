@@ -23,8 +23,7 @@ void loop() {
     if (Yboard.get_button(1)) {
         Yboard.set_led_color(3, 255, 0, 0);
         while (Yboard.get_button(1)) {
-            Yboard.play_note_background(NOTE_C4, 10);
-            delay(10);
+            Yboard.play_notes("ABC");
         }
     } else {
         Yboard.set_led_color(3, 0, 0, 0);
