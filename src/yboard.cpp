@@ -88,6 +88,7 @@ bool YBoardV2::play_notes(const std::string &notes) {
 
     while (YAudio::is_playing()) {
         YAudio::loop();
+        delay(1);
     }
 
     return true;
