@@ -94,27 +94,21 @@ bool YBoardV2::play_notes(const std::string &notes) {
 }
 
 bool YBoardV2::play_notes_background(const std::string &notes) {
-    // Create task that will call loop for us if we are not playing
-    if (!is_audio_playing()) {
-        xTaskCreate(
-            [](void *arg) {
-                // Wait for the audio to start playing
-                while (!YAudio::is_playing()) {
-                    delay(10);
-                }
-
-                while (YAudio::is_playing()) {
-                    YAudio::loop();
-                }
-
-                // Delete the task
-                vTaskDelete(NULL);
-            },
-            "play_notes", 4096, NULL, 1, NULL);
-    }
-
     if (!YAudio::add_notes(notes)) {
         return false;
+    }
+
+    // Make sure the task isn't already running
+    if (background_sound_task == NULL || eTaskGetState(background_sound_task) == eDeleted) {
+        xTaskCreate(
+            [](void *arg) {
+                while (YAudio::is_playing()) {
+                    YAudio::loop();
+                    delay(1);
+                }
+                vTaskDelete(NULL);
+            },
+            "play_notes", 4096, NULL, 1, &background_sound_task);
     }
 
     return true;

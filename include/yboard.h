@@ -141,6 +141,7 @@ class YBoardV2 {
 
   private:
     Adafruit_NeoPixel strip;
+    TaskHandle_t background_sound_task = NULL;
 
     void setup_leds();
     void setup_switches();
