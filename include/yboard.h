@@ -75,13 +75,6 @@ class YBoardV2 {
     int get_knob();
 
     ////////////////////////////// Speaker/Tones //////////////////////////////////
-    /*
-     *  This function continues to play a sound on the speaker after the
-     * play_notes_background function is called. This function must be called
-     * often to playback the sound on the speaker.
-     */
-    void loop_speaker();
-
     /* Plays the specified sequence of notes. The function will return once the notes
      * have finished playing.
      *
