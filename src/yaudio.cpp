@@ -30,8 +30,19 @@ static float next_note_duration_s;
 static void play_note_task(void *params);
 static void parse_next_note();
 static void set_note_defaults();
+static void loop_task(void *params);
 
 ////////////////////////////// Public Functions ///////////////////////////////
+void setup(int pin) {
+    // Initialize global variables
+    tone_pin = pin;
+    reset_audio_buf();
+    set_note_defaults();
+    notes_running = false;
+    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, NULL);
+    xTaskCreate(loop_task, "loop_task", 1024, NULL, 1, NULL);
+}
+
 bool add_notes(const std::string &new_notes) {
     if ((notes.length() + new_notes.length()) > MAX_NOTES_IN_BUFFER) {
         Serial.printf("Error adding notes: too many notes in buffer (%d + %d > %d).\n",
@@ -68,6 +79,15 @@ bool is_playing() { return notes.length() > 0 || next_note_parsed; }
 
 ////////////////////////////// Private Functions ///////////////////////////////
 
+void loop_task(void *params) {
+    while (true) {
+        if (is_playing()) {
+            loop();
+        }
+        delay(10);
+    }
+}
+
 void set_note_defaults() {
     beats_per_minute = 120;
     octave = 2;
@@ -77,15 +97,6 @@ void set_note_defaults() {
 void reset_audio_buf() {
     next_note_parsed = false;
     notes = "";
-}
-
-void setup(int pin) {
-    // Initialize global variables
-    tone_pin = pin;
-    reset_audio_buf();
-    set_note_defaults();
-    notes_running = false;
-    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, NULL);
 }
 
 void play_note_task(void *params) {

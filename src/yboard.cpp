@@ -82,38 +82,18 @@ int YBoardV2::get_knob() {
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
 bool YBoardV2::play_notes(const std::string &notes) {
-    if (!YAudio::add_notes(notes)) {
+    if (!play_notes_background(notes) {
         return false;
     }
 
-    while (YAudio::is_playing()) {
-        YAudio::loop();
-        delay(1);
+    while (is_audio_playing()) {
+        delay(10);
     }
 
     return true;
 }
 
-bool YBoardV2::play_notes_background(const std::string &notes) {
-    if (!YAudio::add_notes(notes)) {
-        return false;
-    }
-
-    // Make sure the task isn't already running
-    if (background_sound_task == NULL || eTaskGetState(background_sound_task) == eDeleted) {
-        xTaskCreate(
-            [](void *arg) {
-                while (YAudio::is_playing()) {
-                    YAudio::loop();
-                    delay(1);
-                }
-                vTaskDelete(NULL);
-            },
-            "play_notes", 4096, NULL, 1, &background_sound_task);
-    }
-
-    return true;
-}
+bool YBoardV2::play_notes_background(const std::string &notes) { return YAudio::add_notes(notes); }
 
 void YBoardV2::stop_audio() { YAudio::stop(); }
 
