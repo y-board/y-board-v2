@@ -82,7 +82,7 @@ int YBoardV2::get_knob() {
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
 bool YBoardV2::play_notes(const std::string &notes) {
-    if (!play_notes_background(notes) {
+    if (!play_notes_background(notes)) {
         return false;
     }
 

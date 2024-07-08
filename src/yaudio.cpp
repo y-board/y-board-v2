@@ -9,38 +9,41 @@ namespace YAudio {
 static const int MAX_NOTES_IN_BUFFER = 4000;
 static int tone_pin;
 
-////// Notes //////
-static bool notes_running;
-
 // This is the sequence of notes to play
 static std::string notes;
+static bool playing_notes = false;
 
 // Notes state
 static int beats_per_minute;
 static int octave;
 static int volume_notes;
 
-// Next note to play
-static bool next_note_parsed;
-static float next_note_freq;
-static float next_note_duration_s;
+typedef struct {
+    unsigned int frequency;
+    unsigned long duration;
+} note_t;
+
+// Note playing task
+TaskHandle_t play_note_task_handle;
+SemaphoreHandle_t notes_mutex;
 
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
 static void play_note_task(void *params);
-static void parse_next_note();
+static note_t parse_next_note();
 static void set_note_defaults();
-static void loop_task(void *params);
 
 ////////////////////////////// Public Functions ///////////////////////////////
 void setup(int pin) {
     // Initialize global variables
     tone_pin = pin;
-    reset_audio_buf();
     set_note_defaults();
-    notes_running = false;
-    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, NULL);
-    xTaskCreate(loop_task, "loop_task", 1024, NULL, 1, NULL);
+
+    // Create the mutex for notes string
+    notes_mutex = xSemaphoreCreateMutex();
+
+    // Create task that will actually do the playing
+    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, &play_note_task_handle);
 }
 
 bool add_notes(const std::string &new_notes) {
@@ -51,42 +54,25 @@ bool add_notes(const std::string &new_notes) {
     }
 
     // Append the new notes to the existing notes
+    xSemaphoreTake(notes_mutex, portMAX_DELAY);
     notes += new_notes;
+    xSemaphoreGive(notes_mutex);
 
     // Signal we need to play
-    notes_running = true;
+    xTaskNotifyGive(play_note_task_handle);
 
     return true;
 }
 
-void loop() {
-    if (notes_running) {
-        // Parse the next note
-        if (notes.length() && !next_note_parsed) {
-            parse_next_note();
-        }
-    }
-}
-
 void stop() {
-    if (notes_running) {
-        notes_running = false;
-        notes = "";
-    }
+    xSemaphoreTake(notes_mutex, portMAX_DELAY);
+    notes.clear();
+    xSemaphoreGive(notes_mutex);
 }
 
-bool is_playing() { return notes.length() > 0 || next_note_parsed; }
+bool is_playing() { return playing_notes; }
 
 ////////////////////////////// Private Functions ///////////////////////////////
-
-void loop_task(void *params) {
-    while (true) {
-        if (is_playing()) {
-            loop();
-        }
-        delay(10);
-    }
-}
 
 void set_note_defaults() {
     beats_per_minute = 120;
@@ -94,34 +80,33 @@ void set_note_defaults() {
     volume_notes = 5;
 }
 
-void reset_audio_buf() {
-    next_note_parsed = false;
-    notes = "";
-}
-
 void play_note_task(void *params) {
     while (1) {
-        // If there is nothing to do, then wait
-        if (!next_note_parsed) {
-            delay(1);
-            continue;
+        // Block waiting for notes to play
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        playing_notes = true;
+
+        // Play all the notes until there are none left
+        while (notes.length()) {
+            xSemaphoreTake(notes_mutex, portMAX_DELAY);
+            note_t note = parse_next_note();
+            xSemaphoreGive(notes_mutex);
+
+            Serial.printf("Playing note (frequency: %f, duration: %d)\n", note.frequency,
+                          note.duration);
+
+            // Play the tone and wait for it to finish
+            tone(tone_pin, note.frequency, note.duration);
+            vTaskDelay(note.duration / portTICK_PERIOD_MS);
         }
-
-        // Convert duration from seconds to miliseconds
-        unsigned long duration_ms = next_note_duration_s * 1000;
-
-        Serial.printf("Playing note (frequency: %f, duration: %d)\n", next_note_freq, duration_ms);
-
-        // Play the tone and wait for it to finish
-        tone(tone_pin, next_note_freq, duration_ms);
-        delay(duration_ms);
-
-        // Signal that the note has been played
-        next_note_parsed = false;
+        playing_notes = false;
     }
 }
 
-void parse_next_note() {
+note_t parse_next_note() {
+    static float note_freq;
+    static float duration_s;
+
     while (notes.length()) {
         // If first character is white space, remove it and continue
         if (isspace(notes[0])) {
@@ -170,7 +155,7 @@ void parse_next_note() {
             continue;
         }
 
-        next_note_duration_s = (60.0 / beats_per_minute); // Quarter note duration in seconds
+        duration_s = (60.0 / beats_per_minute); // Quarter note duration in seconds
 
         // A-G regular notes
         // R for rest
@@ -180,48 +165,48 @@ void parse_next_note() {
             switch (notes[0]) {
             case 'A':
             case 'a':
-                next_note_freq = 440.0;
+                note_freq = 440.0;
                 break;
             case 'B':
             case 'b':
-                next_note_freq = 493.88;
+                note_freq = 493.88;
                 break;
             case 'C':
             case 'c':
-                next_note_freq = 523.25;
+                note_freq = 523.25;
                 break;
             case 'D':
             case 'd':
-                next_note_freq = 587.33;
+                note_freq = 587.33;
                 break;
             case 'E':
             case 'e':
-                next_note_freq = 659.25;
+                note_freq = 659.25;
                 break;
             case 'F':
             case 'f':
-                next_note_freq = 698.46;
+                note_freq = 698.46;
                 break;
             case 'G':
             case 'g':
-                next_note_freq = 783.99;
+                note_freq = 783.99;
                 break;
             case 'z':
-                next_note_duration_s = 0.2;
-                // Fallthough
+                duration_s = 0.2;
+                // Fallthrough
             case 'R':
             case 'r':
-                next_note_freq = 0;
+                note_freq = 0;
                 break;
             }
 
             Serial.println("Parsing next note");
 
             // Adjust frequency for octave
-            next_note_freq *= pow(2, octave - 4);
+            note_freq *= pow(2, octave - 4);
             notes.erase(0, 1);
 
-            float dot_duration = next_note_duration_s;
+            float dot_duration = duration_s;
 
             // Note modifiers
             while (1) {
@@ -232,7 +217,7 @@ void parse_next_note() {
                     int frac_duration = std::stoi(notes, &pos);
                     notes = notes.substr(pos);
                     if (frac_duration >= 1 && frac_duration <= 2000) {
-                        next_note_duration_s = next_note_duration_s * (4.0 / frac_duration);
+                        duration_s = duration_s * (4.0 / frac_duration);
                     }
                     continue;
                 }
@@ -240,19 +225,19 @@ void parse_next_note() {
                 // Dot
                 if (notes[0] == '.') {
                     dot_duration /= 2;
-                    next_note_duration_s += dot_duration;
+                    duration_s += dot_duration;
                     notes.erase(0, 1);
                     continue;
                 }
 
                 // Octave
                 if (notes[0] == '>') {
-                    next_note_freq *= 2;
+                    note_freq *= 2;
                     notes.erase(0, 1);
                     continue;
                 }
                 if (notes[0] == '<') {
-                    next_note_freq /= 2;
+                    note_freq /= 2;
                     notes.erase(0, 1);
                     continue;
                 }
@@ -260,9 +245,9 @@ void parse_next_note() {
                 // Sharp/flat
                 if (notes[0] == '#' || notes[0] == '+' || notes[0] == '-') {
                     if (notes[0] == '#' || notes[0] == '+') {
-                        next_note_freq *= pow(2, 1.0 / 12);
+                        note_freq *= pow(2, 1.0 / 12);
                     } else {
-                        next_note_freq /= pow(2, 1.0 / 12);
+                        note_freq /= pow(2, 1.0 / 12);
                     }
                     notes.erase(0, 1);
                     continue;
@@ -270,35 +255,16 @@ void parse_next_note() {
 
                 break;
             }
-            break;
-        }
-
-        // X<>M<> format for specific frequency (X) and duration (Milliseconds)
-        if (notes[0] == 'X' || notes[0] == 'x') {
-            notes.erase(0, 1);
-            size_t x_pos;
-            next_note_freq = std::stof(notes, &x_pos);
-            notes = notes.substr(x_pos);
-
-            if (!(next_note_freq >= 20 && next_note_freq <= 20000)) {
-                next_note_freq = 0;
-            }
-
-            if (notes[0] == 'M' || notes[0] == 'm') {
-                notes.erase(0, 1);
-                size_t m_pos;
-                next_note_duration_s = std::stof(notes, &m_pos) / 1000.0;
-                notes = notes.substr(m_pos);
-            }
-            break;
+            return {note_freq, duration_s * 1000};
         }
 
         // If we reach here then we have a syntax error
         Serial.printf("Syntax error in notes: %s\n", notes.c_str());
-        notes = "";
+        notes.clear();
         break;
     }
-    next_note_parsed = true;
+
+    return {0, 0};
 }
 
 }; // namespace YAudio
