@@ -53,6 +53,9 @@ bool add_notes(const std::string &new_notes) {
         return false;
     }
 
+    // Signal that we are playing notes
+    playing_notes = true;
+
     // Append the new notes to the existing notes
     xSemaphoreTake(notes_mutex, portMAX_DELAY);
     notes += new_notes;
@@ -84,7 +87,6 @@ void play_note_task(void *params) {
     while (1) {
         // Block waiting for notes to play
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        playing_notes = true;
 
         // Play all the notes until there are none left
         while (notes.length()) {
@@ -99,6 +101,8 @@ void play_note_task(void *params) {
             tone(tone_pin, note.frequency, note.duration);
             vTaskDelay(note.duration / portTICK_PERIOD_MS);
         }
+
+        // If all of the notes have been played, signal that we are done
         playing_notes = false;
     }
 }
