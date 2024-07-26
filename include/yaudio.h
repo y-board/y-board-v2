@@ -7,7 +7,6 @@
 namespace YAudio {
 
 void setup(int tone_pin);
-void loop();
 bool add_notes(const std::string &new_notes);
 void stop();
 bool is_playing();

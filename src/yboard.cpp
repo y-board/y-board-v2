@@ -81,15 +81,13 @@ int YBoardV2::get_knob() {
 
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
 
-void YBoardV2::loop_speaker() { YAudio::loop(); }
-
 bool YBoardV2::play_notes(const std::string &notes) {
     if (!play_notes_background(notes)) {
         return false;
     }
 
     while (is_audio_playing()) {
-        loop_speaker();
+        delay(10);
     }
 
     return true;
