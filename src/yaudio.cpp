@@ -20,7 +20,7 @@ static int volume_notes;
 
 typedef struct {
     unsigned int frequency;
-    unsigned long duration;
+    unsigned int duration;
 } note_t;
 
 // Note playing task
@@ -259,7 +259,7 @@ note_t parse_next_note() {
 
                 break;
             }
-            return {note_freq, duration_s * 1000};
+            return {(unsigned int)round(note_freq), (unsigned int)(duration_s * 1000)};
         }
 
         // If we reach here then we have a syntax error
