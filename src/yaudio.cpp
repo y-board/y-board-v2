@@ -94,7 +94,7 @@ void play_note_task(void *params) {
             note_t note = parse_next_note();
             xSemaphoreGive(notes_mutex);
 
-            Serial.printf("Playing note (frequency: %f, duration: %d)\n", note.frequency,
+            Serial.printf("Playing note (frequency: %u, duration: %u)\n", note.frequency,
                           note.duration);
 
             // Play the tone and wait for it to finish
